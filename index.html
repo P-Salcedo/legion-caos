@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Legión Del Caos</title>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#1a0a0f"><title>Legión Del Caos</title>
 <link rel="stylesheet" href="styles.css">
-<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="config.js"></script>
 </head><body>
@@ -13,9 +13,9 @@
   <input id="lp" type="password" placeholder="Contraseña (mín. 6)" maxlength="60" autocomplete="current-password">
   <button class="btn" type="submit">Entrar o crear cuenta</button>
   <p class="err" id="lerr"></p>
-  <p class="hidden" id="lmsg" style="color:#ffd36b;text-align:center;font-size:13px"></p>
-  <button class="ghost" type="button" id="dg" style="font-size:12px">Diagnóstico de conexión</button>
-  <pre id="diag" class="hidden" style="white-space:pre-wrap;font-size:12px;color:#ffd6dc;background:#0a0a0a;border-radius:10px;padding:10px"></pre>
+  <p class="hidden" id="lmsg"></p>
+  <button class="ghost" type="button" id="dg">Diagnóstico de conexión</button>
+  <pre id="diag" class="hidden"></pre>
   <p class="copy">© 2026 Legión Del Caos · Todos los derechos reservados.</p>
  </form>
 </section>
@@ -23,27 +23,34 @@
 <div id="app" class="hidden">
  <nav id="nav">
   <div id="myAv" title="Tu perfil"></div>
-  <button data-tab="chats" class="on" title="Chats">💬</button>
-  <button data-tab="estados" title="Estados">⭕</button>
-  <button data-tab="mod" id="navMod" class="hidden" title="Moderación">🛡️</button>
-  <button data-tab="cfg" title="Configuración">⚙️</button>
+  <button data-tab="chats" class="on"><i>💬</i><span>Chats</span></button>
+  <button data-tab="estados"><i>⭕</i><span>Estados</span></button>
+  <button data-tab="mod" id="navMod" class="hidden"><i>🛡️</i><span>Moderar</span></button>
+  <button data-tab="cfg"><i>⚙️</i><span>Ajustes</span></button>
  </nav>
- <aside id="side"><header><h2 id="stitle">Chats</h2><button class="ic" id="addb" title="Agregar">＋</button></header><div id="list"></div></aside>
+ <aside id="side">
+  <header class="top"><h2 id="stitle">Chats</h2><button class="ic" id="addb" title="Agregar">＋</button></header>
+  <div class="srch"><input id="q" placeholder="Buscar" autocomplete="off"></div>
+  <div id="list"></div>
+ </aside>
  <main id="pane">
-  <div id="empty"><div class="logo" style="font-size:24px">LEGIÓN<br>DEL CAOS</div><p>Elige un chat o agrega a alguien con ＋</p></div>
+  <div id="empty"><div class="logo">LEGIÓN<br>DEL CAOS</div><p>Elige un chat o agrega a alguien con ＋</p><small>Tus mensajes se guardan en tu proyecto de Supabase.</small></div>
   <div id="chat" class="hidden">
    <canvas id="bgc"></canvas>
-   <header class="chdr"><button class="ic" id="back">←</button><div id="cAv"></div><div class="ci"><b id="cName"></b><small id="cSub"></small></div><button class="ic" id="cset" title="Apodo y fondo">⚙️</button></header>
+   <header class="chdr"><button class="ic" id="back">←</button><div id="cAv"></div><div class="ci"><b id="cName"></b><small id="cSub"></small></div><button class="ic" id="cset" title="Apodo y fondo">⋮</button></header>
    <div id="msgs"></div>
-   <form id="cin"><input id="txt" placeholder="Escribe un mensaje" autocomplete="off"><button class="btn" type="submit">➤</button></form>
+   <div id="tray" class="hidden"></div>
+   <form id="cin"><button type="button" class="ic" id="stkb" title="Stickers">😊</button><input id="txt" placeholder="Mensaje" autocomplete="off"><button class="send" type="submit">➤</button></form>
   </div>
  </main>
 </div>
 
 <div id="am" class="modal hidden"><div class="box"><h3>Agregar persona</h3><input id="au" required placeholder="Usuario único o número (+52 55 1234 5678)"><p class="err" id="aerr"></p><div class="btns"><button class="ghost" data-close>Cancelar</button><button class="btn" id="ago">Agregar</button></div></div></div>
-<div id="cm" class="modal hidden"><div class="box"><h3>Apodo y fondo del chat</h3><input id="cnick" maxlength="30" placeholder="Apodo"><p class="copy">Fondo del chat</p><div class="bgs" id="bgs"></div><div class="btns"><button class="ghost" id="cdel">Quitar chat</button><button class="ghost" data-close>Cancelar</button><button class="btn" id="csave">Guardar</button></div></div></div>
+<div id="cm" class="modal hidden"><div class="box"><h3>Apodo y fondo</h3><input id="cnick" maxlength="30" placeholder="Apodo"><p class="copy">Fondo del chat</p><div class="bgs" id="bgs"></div><div class="btns"><button class="ghost" id="cdel">Quitar chat</button><button class="ghost" data-close>Cancelar</button><button class="btn" id="csave">Guardar</button></div></div></div>
 <div id="pm" class="modal hidden"><div class="box"><h3>Publicar estado</h3><textarea id="stx" rows="3" maxlength="200" placeholder="¿Qué pasa en el caos?"></textarea><p class="copy">Se oculta automáticamente a las 24 horas.</p><div class="btns"><button class="ghost" data-close>Cancelar</button><button class="btn" id="sto">Publicar</button></div></div></div>
-<div id="ban" class="modal hidden"><div class="box" style="text-align:center"><div class="logo" style="font-size:26px">ACCESO DENEGADO</div><p class="msg"></p><button class="btn">Cerrar sesión</button></div></div>
-<div id="mant" class="modal hidden"><div class="box" style="text-align:center"><div class="logo" style="font-size:26px">MANTENIMIENTO</div><p class="msg"></p><button class="btn">Cerrar sesión</button></div></div>
+<div id="ban" class="modal hidden"><div class="box" style="text-align:center"><div class="logo sm">ACCESO DENEGADO</div><p class="msg"></p><button class="btn">Cerrar sesión</button></div></div>
+<div id="mant" class="modal hidden"><div class="box" style="text-align:center"><div class="logo sm">MANTENIMIENTO</div><p class="msg"></p><button class="btn">Cerrar sesión</button></div></div>
 <script src="app.js"></script>
+<script src="ui.js"></script>
 </body></html>
+
