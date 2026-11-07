@@ -30,13 +30,13 @@ function render(){
 }
 function drawMsgs(){
  const el=$('msgs');let h='',day='';
- MSG.forEach(m=>{
+ (GCUR?GMSG:MSG).forEach(m=>{
   const d=dayLbl(m.created_at);if(d!==day){day=d;h+=`<div class="day">${d}</div>`}
   const me=m.sender===ME.id,mt=`<small class="meta">${tm(m.created_at)}${me?' <b class="tk">✓✓</b>':''}</small>`;
   if(m.kind==='sticker'){
    const[em='',an='pop']=(m.body||'').split('|');
    h+=`<div class="sb${me?' me':''}">${m.img?`<img class="stkimg" src="${m.img}" alt="">`:`<span class="stk ${esc(an)}">${esc(em)}</span>`}${mt}</div>`;
-  }else h+=`<div class="b${me?' me':''}">${m.img?`<img src="${m.img}" alt="">`:''}${m.body?esc(m.body):''}${mt}</div>`;
+  }else h+=`<div class="b${me?' me':''}">${GCUR&&!me?`<b class="gn" style="color:${pcol(m.sender)}">${esc(pname(m.sender))}</b>`:''}${m.img?`<img src="${m.img}" alt="">`:''}${m.body?esc(m.body):''}${mt}</div>`;
  });
  el.innerHTML=h;el.scrollTop=el.scrollHeight;
  if(MSG.length&&CUR)LAST[CUR.friend]=MSG[MSG.length-1];
@@ -96,7 +96,121 @@ cfg=function(){
 
 /* ---- Inicializar llamadas cuando hay sesión ---- */
 const _render=render;
-render=function(){if(ME&&!INBOX)initCalls();return _render()};
+render=function(){
+ if(ME&&!INBOX)initCalls();
+ if(ME&&!GLOADED){GLOADED=true;loadGroups().then(()=>{initGroupRT();render()})}
+ return _render();
+};
 
 /* ---- App instalable (PWA) ---- */
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+
+/* ---- Grupos y Clan Legión Caos ---- */
+let GROUPS=[],GCUR=null,GMSG=[],MEM={},PROF={},GLOADED=false,GRT=false;
+const COLS=['#8e24aa','#3949ab','#00897b','#f4511e','#6d4c41','#546e7a'];
+const CATS={solo:'Grupo abierto',clan:'Clan oficial',creadores:'Creadores',moderadores:'Moderadores',patrocinador:'Patrocinador',creador_contenido:'Creador de contenido',veterano:'Veterano'};
+const isStaff=()=>(ME.badges||[]).some(b=>b===0||b===1);
+const canAdmin=g=>!!g&&(g.clan?isStaff():(g.owner===ME.id||isStaff()));
+const canPostG=g=>canAdmin(g)||g.permiso_mensajes==='todos';
+const pname=id=>(PROF[id]||{}).name||'Miembro';
+const pcol=id=>{const b=((PROF[id]||{}).badges||[]).filter(i=>BADGES[i]);return b.length?BADGES[b[0]][2]:'#ffb3ba'};
+const catName=g=>CATS[g.categoria]||'Grupo';
+const gav=g=>`<div class="av gav" style="background-color:${g.color||'#8e24aa'}${(g.photo||g.clan)?`;background-image:url(${esc(g.photo||'icon-512.png')})`:''}">${(g.photo||g.clan)?'':esc(g.name[0]).toUpperCase()}</div>`;
+const grow=(g,i)=>`<div class="row grow${g.clan?' clan':''}" data-g="${g.id}" style="animation-delay:${i*35}ms">${gav(g)}<div class="ri"><div class="rt"><b class="nm">${esc(g.name)}${g.clan?' <span class="tagclan">⚔ CLAN</span>':''}</b><small>${MEM[g.id]||0} 👤</small></div><div class="rs">${catName(g)}</div></div></div>`;
+async function loadGroups(){
+ const{data,error}=await sb.from('groups').select('*');
+ if(error)toast(error.message);
+ GROUPS=data||[];
+ const{data:ms}=await sb.from('group_members').select('group_id');
+ MEM={};(ms||[]).forEach(r=>{MEM[r.group_id]=(MEM[r.group_id]||0)+1});
+ const{data:ps}=await sb.from('profiles').select('id,name,username,badges,photo');
+ PROF={};(ps||[]).forEach(p=>{PROF[p.id]=p});
+ if(GCUR)GCUR=GROUPS.find(x=>x.id===GCUR.id)||null;
+ if(GCUR)drawMsgs();
+}
+function initGroupRT(){
+ if(GRT)return;GRT=true;
+ sb.channel('grupos-rt')
+  .on('postgres_changes',{event:'INSERT',schema:'public',table:'group_messages'},p=>{const m=p.new;if(GCUR&&m.group_id===GCUR.id&&!GMSG.some(x=>x.id===m.id)){GMSG.push(m);drawMsgs()}})
+  .on('postgres_changes',{event:'*',schema:'public',table:'groups'},()=>loadGroups().then(render))
+  .subscribe();
+}
+const _chatRowsBase=chatRows;
+chatRows=function(q){
+ const gh=GROUPS.filter(g=>g.name.toLowerCase().includes(q)).sort((a,b)=>(b.clan?1:0)-(a.clan?1:0)||a.name.localeCompare(b.name)).map(grow).join('');
+ const dm=CS.length?_chatRowsBase(q):'';
+ return gh+dm||'<p class="empty">Aún no tienes chats. Toca ＋ para agregar a alguien.</p>';
+};
+$('list').addEventListener('click',e=>{const r=e.target.closest('[data-g]');if(r)openGroup(r.dataset.g)});
+async function openGroup(id){
+ const g=GROUPS.find(x=>x.id===id);if(!g)return;
+ GCUR=g;CUR=null;
+ $('pane').classList.add('open');$('empty').classList.add('hidden');$('chat').classList.remove('hidden');
+ $('cAv').innerHTML=gav(g);$('cName').textContent=g.name;$('cSub').textContent=catName(g)+' · '+(MEM[g.id]||0)+' miembros';
+ setBg(g.clan?'sangre':'negro');
+ ['acall','vcall','stkb'].forEach(i=>$(i).classList.add('hidden'));$('tray').classList.add('hidden');
+ $('cin').classList.toggle('hidden',!canPostG(g));
+ const{data,error}=await sb.from('group_messages').select('*').eq('group_id',g.id).order('created_at').limit(300);
+ if(error)toast(error.message);
+ GMSG=data||[];drawMsgs();
+}
+const _openChat=openChat;
+openChat=function(f){GCUR=null;['stkb','acall','vcall'].forEach(i=>$(i).classList.remove('hidden'));return _openChat(f)};
+const _back=$('back').onclick;
+$('back').onclick=()=>{GCUR=null;_back()};
+const _sendDM=$('cin').onsubmit;
+$('cin').onsubmit=async e=>{
+ if(!GCUR)return _sendDM(e);
+ e.preventDefault();const t=$('txt').value.trim();if(!t)return;$('txt').value='';
+ const{data,error}=await sb.from('group_messages').insert({group_id:GCUR.id,sender:ME.id,body:t}).select().single();
+ if(error)return toast(error.message);
+ if(!GMSG.some(x=>x.id===data.id)){GMSG.push(data);drawMsgs()}
+};
+function openGset(){
+ const g=GCUR,adm=canAdmin(g),opt=(v,cur,l)=>`<option value="${v}"${cur===v?' selected':''}>${l}</option>`;
+ $('msh').innerHTML=`<div class="sheet"><div class="grab"></div><div class="ah">${gav(g)}<div class="ri"><b class="nm">${esc(g.name)}</b><small>${catName(g)} · ${MEM[g.id]||0} miembros</small></div></div>
+ <label class="copy" style="text-align:left">Nombre del grupo<input id="gn" maxlength="30" value="${esc(g.name)}" ${adm||g.permiso_nombre==='todos'?'':'disabled'}></label>
+ <label class="copy" style="text-align:left">Foto del grupo<input id="gp" type="file" accept="image/*" ${adm||g.permiso_foto==='todos'?'':'disabled'}></label>
+ ${adm?`<label class="copy" style="text-align:left">¿Quién puede mandar mensajes?<select id="gpm">${opt('todos',g.permiso_mensajes,'Todos los miembros')}${opt('admins',g.permiso_mensajes,'Solo administradores')}</select></label>
+ <label class="copy" style="text-align:left">¿Quién puede editar el nombre?<select id="gpn">${opt('admins',g.permiso_nombre,'Solo administradores')}${opt('todos',g.permiso_nombre,'Todos los miembros')}</select></label>
+ <label class="copy" style="text-align:left">¿Quién puede cambiar la foto?<select id="gpf">${opt('admins',g.permiso_foto,'Solo administradores')}${opt('todos',g.permiso_foto,'Todos los miembros')}</select></label>`:''}
+ ${adm&&g.categoria==='solo'?'<label class="copy" style="text-align:left">Agregar miembro (usuario)<input id="gadd" placeholder="usuario"></label>':''}
+ <div class="btns"><button class="ghost" data-x>Cerrar</button><button class="btn" id="gsave">Guardar</button></div></div>`;
+ $('msh').classList.remove('hidden');
+ $('gsave').onclick=saveG;
+ $('gp').onchange=async e=>{const f=e.target.files[0];if(!f)return;const photo=await small(f,256);const{error}=await sb.from('groups').update({photo}).eq('id',g.id);if(error)return toast(error.message);g.photo=photo;toast('Foto actualizada');render();openGset()};
+}
+async function saveG(){
+ const g=GCUR,adm=canAdmin(g),up={};
+ const nm=$('gn').value.trim();if(nm&&nm!==g.name&&!$('gn').disabled)up.name=nm;
+ if(adm){up.permiso_mensajes=$('gpm').value;up.permiso_nombre=$('gpn').value;up.permiso_foto=$('gpf').value}
+ if(Object.keys(up).length){const{error}=await sb.from('groups').update(up).eq('id',g.id);if(error)return toast(error.message);Object.assign(g,up)}
+ const add=$('gadd')?$('gadd').value.trim():'';
+ if(add)await addMember(g,add);
+ $('msh').classList.add('hidden');$('cName').textContent=g.name;toast('Grupo guardado');render();
+}
+async function addMember(g,u){
+ const{data:p}=await sb.from('profiles').select('id,name').eq('username',u.toLowerCase()).maybeSingle();
+ if(!p)return toast('No existe ese usuario');
+ const{error}=await sb.from('group_members').insert({group_id:g.id,user_id:p.id});
+ if(error)return toast(error.message);
+ MEM[g.id]=(MEM[g.id]||0)+1;toast(p.name+' agregado');
+}
+const _cset=$('cset').onclick;
+$('cset').onclick=()=>GCUR?openGset():_cset();
+$('gb').onclick=()=>$('gm').classList.remove('hidden');
+$('gcreate').onclick=async()=>{
+ const name=$('gmn').value.trim();if(!name)return toast('Escribe un nombre para el grupo');
+ const{error}=await sb.from('groups').insert({name,categoria:$('gmc').value,owner:ME.id,color:COLS[Math.random()*COLS.length|0]});
+ if(error)return toast(error.message);
+ $('gm').classList.add('hidden');$('gmn').value='';await loadGroups();render();toast('Grupo creado');
+};
+
+/* ---- Fondo: partículas de brasas ---- */
+(function(){
+ const c=$('bgfx'),x=c.getContext('2d');let P=[];
+ const R=()=>{c.width=innerWidth;c.height=innerHeight;P=Array.from({length:Math.min(60,innerWidth/16|0)},()=>({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*2+.6,v:Math.random()*.4+.15,s:Math.random()*6.28,c:Math.random()<.7?'#ff3b4d':'#ffcf5a'}))};
+ R();addEventListener('resize',R);
+ const f=()=>{x.clearRect(0,0,c.width,c.height);P.forEach(p=>{p.y-=p.v;p.s+=.01;p.x+=Math.sin(p.s)*.3;if(p.y<-5){p.y=c.height+5;p.x=Math.random()*c.width}x.globalAlpha=.25+.35*Math.abs(Math.sin(p.s));x.fillStyle=p.c;x.beginPath();x.arc(p.x,p.y,p.r,0,6.283);x.fill()});x.globalAlpha=1;requestAnimationFrame(f)};
+ requestAnimationFrame(f);
+})();
