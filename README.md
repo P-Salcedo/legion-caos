@@ -75,3 +75,25 @@ Privacidad: quien administra el proyecto (tú) puede ver los mensajes desde el p
 2. Pulsa **Diagnóstico de conexión** debajo del botón de entrar.
 3. Deben aparecer dos ✅: *config.js* y *Base de datos*. Si aparece una ❌, el mensaje te dice qué paso falta.
 4. Crea una cuenta de prueba. En Supabase, **Authentication → Users** debe mostrarla, y **Table Editor → profiles** debe tener su fila.
+
+## Actualización 3 (diseño tipo WhatsApp y stickers)
+1. Supabase → **SQL Editor** → **New query** → pega `supabase-v3.sql` → **Run**.
+2. En GitHub sube `index.html` y `styles.css` (reemplazan los anteriores), y `ui.js` y `supabase-v3.sql` (nuevos). `app.js` y `config.js` no cambian.
+3. Recarga la página: en el celular, menú ⋮ → **Actualizar** (o Ctrl+F5 en computadora).
+
+**Stickers:** en cualquier chat toca 😊. Hay 16 stickers animados (rebote, giro, pulso). Con **📁 Subir sticker** puedes enviar una imagen propia; si es PNG con fondo transparente, se ve mejor.
+
+## Actualización 4 (moderación en lista, llamadas, tonos, apodos, creador, app instalable)
+1. Supabase → **SQL Editor** → **New query** → pega `supabase-v4.sql` → **Run**.
+2. GitHub: sube `index.html`, `styles.css`, `app.js` y `ui.js` (reemplazan los anteriores). Sube `calls.js`, `sw.js`, `manifest.webmanifest`, `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` y `supabase-v4.sql` (nuevos). `config.js` no cambia.
+3. Recarga la página (⋮ → Actualizar en el celular).
+
+**Llamadas:** abre un chat y toca 📞 (voz) o 📹 (video). La otra persona debe tener la app abierta. Sale su tono de llamada, que cada quien elige en ⚙️ Ajustes.
+Si una llamada no conecta con datos móviles, falta un servidor TURN. Puedes crear uno gratis y pegarlo en `config.js` como `TURN:{urls:'turn:...',username:'...',credential:'...'}`.
+
+**Creador:** en 🛡️ Moderar, toca un usuario y activa o quita el chip 👑 Creador. No puedes quitártelo a ti mismo.
+
+**Instalar como app:**
+- Android (Chrome): ⋮ → **Instalar aplicación** (o *Agregar a pantalla principal*).
+- iPhone (Safari): botón Compartir → **Agregar a pantalla de inicio**.
+La app necesita abrirse con el link https de GitHub Pages.

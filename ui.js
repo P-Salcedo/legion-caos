@@ -55,3 +55,48 @@ $('stkb').onclick=()=>$('tray').classList.toggle('hidden');
 $('q').oninput=render;
 const _onMsg=onMsg;
 onMsg=m=>{_onMsg(m);const f=m.sender===ME.id?m.receiver:m.sender;if(!LAST[f]||new Date(m.created_at)>=new Date(LAST[f].created_at))LAST[f]=m;if(TAB==='chats')render()};
+
+/* ---- Moderación en lista, insignias (el creador puede dar o quitar el rango) ---- */
+let MODS=[];
+const canSetB=(i,p)=>{const cr=(ME.badges||[]).includes(0),b=p.badges||[];if(cr)return !(i===0&&p.id===ME.id);return i>=2&&!b.includes(0)&&!b.includes(1)};
+async function loadMod(){
+ const{data,error}=await sb.from('profiles').select('*').order('name');
+ if(error)return toast(error.message);
+ MODS=data||[];
+ $('list').innerHTML=`<div class="sec">Usuarios (${MODS.length})</div>`+MODS.map((p,i)=>`<div class="row mrow" data-m="${p.id}" style="animation-delay:${Math.min(i,20)*25}ms">${av(p,'#444')}<div class="ri"><b class="nm">${esc(p.name)}${bdg(p)}</b><small>@${esc(p.username)}</small></div><span class="chev">›</span></div>`).join('');
+}
+function openMsheet(id){
+ const p=MODS.find(x=>x.id===id);if(!p)return;
+ $('msh').innerHTML=`<div class="sheet"><div class="grab"></div><div class="ah">${av(p,'#444')}<div class="ri"><b class="nm">${esc(p.name)}</b><small>@${esc(p.username)}</small></div></div><p class="lbl">Insignias</p><div class="chips">${Object.keys(BADGES).map(i=>`<button class="chip${(p.badges||[]).includes(+i)?' on':''}" style="--bc:${BADGES[i][2]}" data-bd="${p.id}:${i}" ${canSetB(+i,p)?'':'disabled'}>${BADGES[i][0]} ${BADGES[i][1]}</button>`).join('')}</div><button class="ghost" data-x>Cerrar</button></div>`;
+ $('msh').classList.remove('hidden');
+}
+async function setBadge(k){
+ const[pid,bid]=k.split(':'),id=+bid;
+ const{data:p,error:e1}=await sb.from('profiles').select('badges').eq('id',pid).single();
+ if(e1)return toast(e1.message);
+ const cur=p.badges||[],nb=cur.includes(id)?cur.filter(x=>x!==id):cur.concat([id]);
+ const{error}=await sb.from('profiles').update({badges:nb}).eq('id',pid);
+ if(error)return toast(error.message);
+ toast('Insignia actualizada');await loadMod();openMsheet(pid);
+}
+$('list').addEventListener('click',e=>{const r=e.target.closest('[data-m]');if(r)openMsheet(r.dataset.m)});
+$('msh').onclick=e=>{
+ if(e.target.id==='msh'||e.target.closest('[data-x]')){$('msh').classList.add('hidden');return}
+ const b=e.target.closest('[data-bd]');if(b&&!b.disabled)setBadge(b.dataset.bd);
+};
+
+/* ---- Tono de llamada en Ajustes ---- */
+const _cfg=cfg;
+cfg=function(){
+ _cfg();if(!$('out'))return;
+ $('out').insertAdjacentHTML('beforebegin',`<label class="copy" style="text-align:left">Tono de llamada entrante<select id="tono">${Object.keys(TONE_NAMES).map(k=>`<option value="${k}"${(ME.tono||'clasico')===k?' selected':''}>${TONE_NAMES[k]}</option>`).join('')}</select></label><button class="ghost" id="tprev" style="align-self:flex-start">▶ Probar tono</button>`);
+ $('tono').onchange=async e=>{const{error}=await sb.from('profiles').update({tono:e.target.value}).eq('id',ME.id);if(error)return toast(error.message);ME.tono=e.target.value;toast('Tono guardado')};
+ $('tprev').onclick=()=>playTone($('tono').value);
+};
+
+/* ---- Inicializar llamadas cuando hay sesión ---- */
+const _render=render;
+render=function(){if(ME&&!INBOX)initCalls();return _render()};
+
+/* ---- App instalable (PWA) ---- */
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));

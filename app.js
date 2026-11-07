@@ -188,9 +188,9 @@ $('ago').onclick=async()=>{
  
  if(!p)return $('aerr').textContent=isPh?(n?'No existe ningún usuario con ese número':'Número inválido. Incluye el código de país (ej. +52 55 1234 5678)'):'No existe ese usuario. Si es un número, escríbelo con código de país (ej. +52...)';
  if(p.id===ME.id)return $('aerr').textContent='Ese eres tú';
- const{error}=await sb.from('contacts').upsert({owner:ME.id,friend:p.id,nickname:p.name,bg:'fuego'},{onConflict:'owner,friend',ignoreDuplicates:true});
+ const{error}=await sb.from('contacts').upsert({owner:ME.id,friend:p.id,nickname:($('an').value.trim()||p.name),bg:'fuego'},{onConflict:'owner,friend',ignoreDuplicates:true});
  if(error)return $('aerr').textContent=error.message;
- $('am').classList.add('hidden');$('au').value='';await loadContacts();render();
+ $('am').classList.add('hidden');$('au').value='';$('an').value='';await loadContacts();render();
 };
 $('bgs').innerHTML=Object.keys(BGS).map(k=>`<button data-bg="${k}" class="bg-${k}">${BGS[k]}</button>`).join('');
 function pick(k){cmBg=k;document.querySelectorAll('#bgs button').forEach(b=>b.classList.toggle('on',b.dataset.bg===k))}

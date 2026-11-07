@@ -107,3 +107,30 @@ input[type=file]{font-size:13px;color:var(--mut)}
 @keyframes shine{from{background-position:0% center}to{background-position:100% center}}
 @media(max-width:800px){#app{flex-direction:column-reverse}#nav{width:100%;height:66px;flex-direction:row;justify-content:space-around;padding:6px 0;border:0;border-top:1px solid #ffffff0d}#nav #myAv{display:none}#side{width:100%;flex:1}#pane{position:fixed;inset:0;z-index:5;transform:translateX(100%);transition:transform .32s cubic-bezier(.2,.8,.2,1)}#pane.open{transform:none}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+#side,#list,#pane,#chat,#msgs{min-height:0}
+#app{height:100%}
+.lbl{font-size:13px;color:var(--mut);margin-top:4px}
+.call{position:fixed;inset:0;z-index:70;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:radial-gradient(circle at 50% 30%,#6e0a1c,#0b0306 75%);animation:fadeIn .3s both;overflow:hidden}
+#rv{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+#lv{position:absolute;top:18px;right:14px;width:110px;border-radius:14px;border:2px solid #fff3;transform:scaleX(-1);z-index:2}
+#cav,#ica{position:relative;z-index:1}
+#cav .av,#ica .av{width:130px;height:130px;font-size:52px;animation:ringp 1.4s infinite}
+.call h2,.call p{position:relative;z-index:1}
+.cctl{display:flex;gap:22px;margin-top:20px;position:relative;z-index:1}
+.cbtn{width:66px;height:66px;border-radius:50%;font-size:24px;background:#ffffff18;display:grid;place-items:center;transition:transform .15s}
+.cbtn:active{transform:scale(.88)}
+.cbtn.end,.cbtn.red{background:#e53935}
+.cbtn.green{background:#2ecc71;animation:ringp 1.2s infinite}
+.cbtn.on{background:#fff;color:#000}
+@keyframes ringp{0%{box-shadow:0 0 0 0 #ff1f3d88}100%{box-shadow:0 0 0 40px transparent}}
+.sheetwrap{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;animation:fadeIn .2s both}
+.sheet{width:100%;background:#120a0d;border-radius:22px 22px 0 0;padding:14px 18px 22px;display:flex;flex-direction:column;gap:14px;animation:up .3s both;max-height:80vh;overflow:auto}
+.grab{width:44px;height:5px;border-radius:3px;background:#ffffff30;align-self:center}
+.ah{display:flex;align-items:center;gap:12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-size:13px;padding:7px 12px;border-radius:16px;border:1px solid #ffffff22;opacity:.55;transition:all .2s}
+.chip.on{background:var(--bc);color:#000;border-color:transparent;opacity:1;font-weight:700}
+.chip:not(:disabled):hover{opacity:1}
+.chip:disabled{opacity:.25;cursor:not-allowed}
+.mrow:active{background:#ffffff12}
+.chev{color:var(--mut);font-size:24px;margin-left:auto}
