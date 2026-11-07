@@ -1,1 +1,84 @@
+name: Generar APK
 
+on:
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Preparar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Preparar Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Crear el proyecto Android con los archivos de la app
+        run: |
+          mkdir -p movil/www
+          cd movil
+          npm init -y > /dev/null
+          npm install @capacitor/core@6 @capacitor/android@6
+          npm install -D @capacitor/cli@6
+          cp ../index.html ../styles.css ../app.js ../ui.js ../calls.js ../config.js ../sw.js ../manifest.webmanifest ../icon-192.png ../icon-512.png ../apple-touch-icon.png www/
+          npx cap init "Legión Del Caos" "com.legion.caos" --web-dir=www
+          npx cap add android
+          npx cap sync android
+
+      - name: Permisos de micrófono, cámara y notificaciones
+        working-directory: movil
+        run: |
+          python3 <<'PY'
+          p='android/app/src/main/AndroidManifest.xml'
+          s=open(p,encoding='utf-8').read()
+          permisos=['INTERNET','RECORD_AUDIO','CAMERA','MODIFY_AUDIO_SETTINGS','VIBRATE','POST_NOTIFICATIONS','WAKE_LOCK']
+          bloque=''.join('    <uses-permission android:name="android.permission.%s" />\n' % x for x in permisos)
+          if 'RECORD_AUDIO' not in s:
+              s=s.replace('<application',bloque+'    <application',1)
+          open(p,'w',encoding='utf-8').write(s)
+          print('permisos listos')
+          PY
+
+      - name: Poner el logo como ícono de la app
+        working-directory: movil
+        run: |
+          pip install pillow
+          python3 <<'PY'
+          import os
+          from PIL import Image
+          src=Image.open('www/icon-512.png').convert('RGBA')
+          tamanos={'mdpi':48,'hdpi':72,'xhdpi':96,'xxhdpi':144,'xxxhdpi':192}
+          for nivel,t in tamanos.items():
+              carpeta='android/app/src/main/res/mipmap-'+nivel
+              if not os.path.isdir(carpeta):
+                  continue
+              img=src.resize((t,t),Image.LANCZOS)
+              for nombre in ['ic_launcher.png','ic_launcher_round.png','ic_launcher_foreground.png']:
+                  img.save(os.path.join(carpeta,nombre))
+          print('iconos listos')
+          PY
+
+      - name: Compilar el APK
+        working-directory: movil/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Guardar el APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: legion-caos-apk
+          path: movil/android/app/build/outputs/apk/debug/app-debug.apk
