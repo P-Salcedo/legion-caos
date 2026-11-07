@@ -33,6 +33,7 @@ function drawMsgs(){
  (GCUR?GMSG:MSG).forEach(m=>{
   const d=dayLbl(m.created_at);if(d!==day){day=d;h+=`<div class="day">${d}</div>`}
   const me=m.sender===ME.id,mt=`<small class="meta">${tm(m.created_at)}${me?' <b class="tk">✓✓</b>':''}</small>`;
+  if(m.kind==='encuesta'){h+=`<div class="wide">${encCard(m)}</div>`;return}
   if(m.kind==='sticker'){
    const[em='',an='pop']=(m.body||'').split('|');
    h+=`<div class="sb${me?' me':''}">${m.img?`<img class="stkimg" src="${m.img}" alt="">`:`<span class="stk ${esc(an)}">${esc(em)}</span>`}${mt}</div>`;
@@ -121,9 +122,9 @@ async function loadGroups(){
  const{data,error}=await sb.from('groups').select('*');
  if(error)toast(error.message);
  GROUPS=data||[];
- const{data:ms}=await sb.from('group_members').select('group_id');
- MEM={};(ms||[]).forEach(r=>{MEM[r.group_id]=(MEM[r.group_id]||0)+1});
- const{data:ps}=await sb.from('profiles').select('id,name,username,badges,photo');
+ const{data:ms}=await sb.from('group_members').select('group_id,user_id');
+ GMEM={};(ms||[]).forEach(r=>{(GMEM[r.group_id]=GMEM[r.group_id]||[]).push(r.user_id)});MEM={};Object.keys(GMEM).forEach(k=>{MEM[k]=GMEM[k].length});
+ const{data:ps}=await sb.from('profiles').select('id,name,username,badges,photo,phone,about,created_at');
  PROF={};(ps||[]).forEach(p=>{PROF[p.id]=p});
  if(GCUR)GCUR=GROUPS.find(x=>x.id===GCUR.id)||null;
  if(GCUR)drawMsgs();
@@ -152,7 +153,7 @@ async function openGroup(id){
  $('cin').classList.toggle('hidden',!canPostG(g));
  const{data,error}=await sb.from('group_messages').select('*').eq('group_id',g.id).order('created_at').limit(300);
  if(error)toast(error.message);
- GMSG=data||[];drawMsgs();
+ GMSG=data||[];await loadEnc(g.id);initEncRT();drawMsgs();
 }
 const _openChat=openChat;
 openChat=function(f){GCUR=null;['stkb','acall','vcall'].forEach(i=>$(i).classList.remove('hidden'));return _openChat(f)};
@@ -214,3 +215,191 @@ $('gcreate').onclick=async()=>{
  const f=()=>{x.clearRect(0,0,c.width,c.height);P.forEach(p=>{p.y-=p.v;p.s+=.01;p.x+=Math.sin(p.s)*.3;if(p.y<-5){p.y=c.height+5;p.x=Math.random()*c.width}x.globalAlpha=.25+.35*Math.abs(Math.sin(p.s));x.fillStyle=p.c;x.beginPath();x.arc(p.x,p.y,p.r,0,6.283);x.fill()});x.globalAlpha=1;requestAnimationFrame(f)};
  requestAnimationFrame(f);
 })();
+
+/* ---- Información de grupo y contacto, encuesta de equipos ---- */
+let GMEM={},ENC={},ERT=false;
+const memberIds=gid=>GMEM[gid]||[];
+const winOpen=m=>Date.now()<new Date(m.unido).getTime()+5*6e4;
+const cuentaRegresiva=t=>{const left=new Date(t).getTime()+5*6e4-Date.now();return left<=0?'0:00':mmss(Math.ceil(left/1e3))};
+const myTeam=eid=>{const e=ENC[eid];if(!e)return null;for(const t of e.teams){const x=t.m.find(z=>z.user_id===ME.id);if(x)return{tid:t.id,unido:x.unido_at}}return null};
+setInterval(()=>document.querySelectorAll('[data-cdu]').forEach(el=>{el.textContent=cuentaRegresiva(el.dataset.cdu)}),1000);
+
+async function loadEnc(gid){
+ const{data:es}=await sb.from('encuestas').select('*').eq('group_id',gid);
+ ENC={};if(!es||!es.length)return;
+ const ids=es.map(e=>e.id);
+ const{data:ts}=await sb.from('escuadras').select('*').in('encuesta_id',ids).order('orden');
+ const{data:ms}=await sb.from('escuadra_miembros').select('*').in('encuesta_id',ids);
+ es.forEach(e=>{ENC[e.id]={texto:e.texto,cerrada:e.cerrada,teams:(ts||[]).filter(t=>t.encuesta_id===e.id).map(t=>({id:t.id,nombre:t.nombre,m:(ms||[]).filter(x=>x.escuadra_id===t.id)}))}});
+}
+function initEncRT(){
+ if(ERT)return;ERT=true;
+ const again=()=>{if(GCUR)loadEnc(GCUR.id).then(drawMsgs)};
+ sb.channel('enc-rt')
+  .on('postgres_changes',{event:'*',schema:'public',table:'escuadra_miembros'},again)
+  .on('postgres_changes',{event:'*',schema:'public',table:'encuestas'},again)
+  .subscribe();
+}
+function encCard(m){
+ const e=ENC[m.id],staff=canAdmin(GCUR);
+ if(!e)return '<div class="enc"><div class="skel"><div class="shim"></div></div></div>';
+ const mine=myTeam(m.id);
+ const teams=e.teams.map((t,i)=>{
+  const isMine=!!mine&&mine.tid===t.id,full=t.m.length>=4;
+  const slots=[0,1,2,3].map(s=>{const x=t.m[s];return x?`<div class="slot filled" style="--d:${s*70}ms" title="${esc(pname(x.user_id))}">${av(PROF[x.user_id]||{name:'?'},pcol(x.user_id))}${staff?`<button class="rm" data-mv="${m.id}:${x.user_id}" title="Mover o quitar">⋯</button>`:''}</div>`:'<div class="slot"></div>'}).join('');
+  return `<div class="team${isMine?' mine':''}${full&&!isMine?' full':''}" data-tm="${m.id}:${t.id}" style="animation-delay:${i*70}ms"><div class="tt"><b>${esc(t.nombre)}</b><small>${t.m.length}/4</small></div><div class="slots">${slots}</div>${staff?`<button class="addt" data-addt="${m.id}:${t.id}">＋ Añadir</button>`:''}</div>`;
+ }).join('');
+ const hint=mine&&!staff&&!e.cerrada?`<div class="hint">${winOpen(mine)?`Puedes cambiar de equipo durante <span data-cdu="${mine.unido}">${cuentaRegresiva(mine.unido)}</span>`:'Ya no puedes cambiar de equipo'}</div>`:'';
+ return `<div class="enc${e.cerrada?' closed':''}"><div class="eh"><span class="ei">📋</span><div><b>${esc(m.body||'Encuesta')}</b><small>${esc(e.texto||'')}</small></div><span class="${e.cerrada?'badge-c':'badge-o'}">${e.cerrada?'Cerrada':'Abierta'}</span></div>${hint}<div class="teams">${teams}</div>${staff?`<div class="ebtns"><button class="ghost" data-tog="${m.id}">${e.cerrada?'Reabrir':'Cerrar'} encuesta</button></div>`:''}</div>`;
+}
+async function joinTeam(eid,tid){
+ const e=ENC[eid];if(!e)return;
+ if(e.cerrada)return toast('La encuesta está cerrada');
+ const mine=myTeam(eid),t=e.teams.find(x=>x.id===tid);
+ if(mine&&mine.tid===tid)return;
+ if(mine&&!winOpen(mine))return toast('Ya pasaron los 5 minutos: no puedes cambiar de equipo');
+ if(t.m.length>=4)return toast('Este equipo ya está completo');
+ const{error}=mine
+  ?await sb.from('escuadra_miembros').update({escuadra_id:tid}).eq('encuesta_id',eid).eq('user_id',ME.id)
+  :await sb.from('escuadra_miembros').insert({encuesta_id:eid,user_id:ME.id,escuadra_id:tid});
+ if(error)return toast(error.message);
+ await loadEnc(GCUR.id);drawMsgs();toast('Estás en '+t.nombre);
+}
+function openSheetTeam(eid,uid){
+ const e=ENC[eid],p=PROF[uid]||{name:'Miembro',username:''};
+ const cur=(e.teams.find(t=>t.m.some(x=>x.user_id===uid))||{}).id;
+ $('msh').innerHTML=`<div class="sheet"><div class="grab"></div><div class="ah">${av(p,pcol(uid))}<div class="ri"><b class="nm">${esc(p.name)}</b><small>@${esc(p.username)}</small></div></div><p class="lbl">Mover a otro equipo</p><div class="chips">${e.teams.filter(t=>t.id!==cur).map(t=>`<button class="chip" data-a2="mv:${eid}:${uid}:${t.id}" ${t.m.length>=4?'disabled':''}>→ ${esc(t.nombre)} (${t.m.length}/4)</button>`).join('')}</div><div class="chips"><button class="chip danger" data-a2="rm:${eid}:${uid}:0">Quitar del equipo</button></div><button class="ghost" data-x>Cerrar</button></div>`;
+ $('msh').classList.remove('hidden');
+}
+function openAddSheet(eid,tid){
+ const e=ENC[eid],t=e.teams.find(x=>x.id===tid);
+ const inE=new Set(e.teams.flatMap(x=>x.m.map(z=>z.user_id)));
+ const cand=memberIds(GCUR.id).filter(u=>!inE.has(u));
+ $('msh').innerHTML=`<div class="sheet"><div class="grab"></div><p class="lbl">Agregar a ${esc(t.nombre)} (${t.m.length}/4)</p><div class="chips">${cand.map(u=>`<button class="chip" data-a2="add:${eid}:${u}:${tid}" ${t.m.length>=4?'disabled':''}>${esc(pname(u))}</button>`).join('')||'<small>Todos ya tienen equipo</small>'}</div><button class="ghost" data-x>Cerrar</button></div>`;
+ $('msh').classList.remove('hidden');
+}
+$('msh').addEventListener('click',async e=>{
+ const b=e.target.closest('[data-a2]');if(!b)return;
+ const[a,eid,uid,tid]=b.dataset.a2.split(':');
+ let err=null;
+ if(a==='mv'){({error:err}=await sb.from('escuadra_miembros').update({escuadra_id:+tid}).eq('encuesta_id',+eid).eq('user_id',uid))}
+ else if(a==='rm'){({error:err}=await sb.from('escuadra_miembros').delete().eq('encuesta_id',+eid).eq('user_id',uid))}
+ else if(a==='add'){({error:err}=await sb.from('escuadra_miembros').insert({encuesta_id:+eid,user_id:uid,escuadra_id:+tid}))}
+ if(err)return toast(err.message);
+ $('msh').classList.add('hidden');await loadEnc(GCUR.id);drawMsgs();
+});
+$('msgs').addEventListener('click',async e=>{
+ const q=s=>e.target.closest(s);
+ const tog=q('[data-tog]'),tm2=q('[data-tm]'),mv=q('[data-mv]'),at=q('[data-addt]');
+ if(tog){const id=+tog.dataset.tog;const{error}=await sb.from('encuestas').update({cerrada:!ENC[id].cerrada}).eq('id',id);if(error)return toast(error.message);await loadEnc(GCUR.id);return drawMsgs()}
+ if(mv){const[eid,uid]=mv.dataset.mv.split(':');return openSheetTeam(+eid,uid)}
+ if(at){const[eid,tid]=at.dataset.addt.split(':').map(Number);return openAddSheet(eid,tid)}
+ if(tm2&&!canAdmin(GCUR)){const[eid,tid]=tm2.dataset.tm.split(':').map(Number);return joinTeam(eid,tid)}
+});
+async function crearEncuesta(){
+ const titulo=$('enti').value.trim()||'Equipos',texto=$('ente').value.trim();
+ const nombres=$('entm').value.split('\n').map(s=>s.trim()).filter(Boolean).slice(0,8);
+ if(nombres.length<2)return toast('Escribe al menos 2 equipos (uno por línea)');
+ const{data:m,error}=await sb.from('group_messages').insert({group_id:GCUR.id,sender:ME.id,kind:'encuesta',body:titulo}).select().single();
+ if(error)return toast(error.message);
+ const r1=await sb.from('encuestas').insert({id:m.id,group_id:GCUR.id,texto});
+ if(r1.error)return toast(r1.error.message);
+ const r2=await sb.from('escuadras').insert(nombres.map((n,i)=>({encuesta_id:m.id,nombre:n,orden:i})));
+ if(r2.error)return toast(r2.error.message);
+ $('enc').classList.add('hidden');$('enti').value='';$('ente').value='';
+ if(!GMSG.some(x=>x.id===m.id))GMSG.push(m);
+ await loadEnc(GCUR.id);drawMsgs();toast('Encuesta publicada');
+}
+$('encreate').onclick=crearEncuesta;
+
+/* ---- Panel de información del grupo ---- */
+function openGInfo(){
+ const g=GCUR;if(!g)return;
+ const adm=canAdmin(g),ids=memberIds(g.id),opt=(v,cur,l)=>`<option value="${v}"${cur===v?' selected':''}>${l}</option>`;
+ const rows=ids.map((uid,i)=>{const p=PROF[uid]||{name:'Miembro',username:'?'};return `<div class="mrow2" data-pf="${uid}" style="animation-delay:${Math.min(i,15)*40}ms">${av(p,pcol(uid))}<div class="ri"><b class="nm">${esc(p.name)}${bdg(p)}${g.owner===uid?'<span class="own">Dueño</span>':''}</b><small>@${esc(p.username)}</small></div>${adm&&!g.clan&&uid!==ME.id?`<button class="ic" data-rmm="${uid}" title="Quitar del grupo">✕</button>`:''}</div>`}).join('');
+ $('ginfo').innerHTML=`<div class="pwrap">
+  <header class="phead"><button class="ic" data-close2>←</button><b>Info del grupo</b><span></span></header>
+  <div class="hero${g.clan?' clanhero':''}">${gav(g)}<h2>${esc(g.name)}</h2><p>${catName(g)} · ${ids.length} miembros</p>${g.clan?'<span class="tagclan">⚔ CLAN OFICIAL</span>':''}</div>
+  <div class="card2"><div class="sec">Miembros</div>${rows||'<p class="empty">Sin miembros</p>'}</div>
+  ${adm?`<div class="card2"><div class="sec">Configuración</div>
+   <label class="lab">Nombre<input id="gn2" maxlength="30" value="${esc(g.name)}"></label>
+   <label class="lab">Foto del grupo<input id="gp2" type="file" accept="image/*"></label>
+   <label class="lab">¿Quién puede mandar mensajes?<select id="gpm2">${opt('todos',g.permiso_mensajes,'Todos los miembros')}${opt('admins',g.permiso_mensajes,'Solo administradores')}</select></label>
+   <label class="lab">¿Quién puede editar el nombre?<select id="gpn2">${opt('admins',g.permiso_nombre,'Solo administradores')}${opt('todos',g.permiso_nombre,'Todos los miembros')}</select></label>
+   <label class="lab">¿Quién puede cambiar la foto?<select id="gpf2">${opt('admins',g.permiso_foto,'Solo administradores')}${opt('todos',g.permiso_foto,'Todos los miembros')}</select></label>
+   ${g.categoria==='solo'?'<label class="lab">Agregar miembro por usuario<input id="gadd2" placeholder="usuario"></label>':''}
+   <div class="rowbtns"><button class="btn" id="gsave2">Guardar cambios</button><button class="btn alt" id="genc">📋 Encuesta de equipos</button></div></div>`:''}
+  ${!adm&&!g.clan?'<div class="card2"><button class="ghost danger" id="gleave">Salir del grupo</button></div>':''}
+ </div>`;
+ $('ginfo').classList.add('show');
+}
+async function saveGInfo(){
+ const g=GCUR,up={permiso_mensajes:$('gpm2').value,permiso_nombre:$('gpn2').value,permiso_foto:$('gpf2').value};
+ const nm=$('gn2').value.trim();if(nm&&nm!==g.name)up.name=nm;
+ const{error}=await sb.from('groups').update(up).eq('id',g.id);
+ if(error)return toast(error.message);
+ const add=$('gadd2')?$('gadd2').value.trim():'';
+ if(add)await addMember(g,add);
+ await loadGroups();$('cName').textContent=(GCUR||g).name;openGInfo();render();toast('Cambios guardados');
+}
+$('ginfo').addEventListener('click',async e=>{
+ const q=s=>e.target.closest(s),g=GCUR;
+ if(q('[data-close2]'))return $('ginfo').classList.remove('show');
+ const rm=q('[data-rmm]');
+ if(rm){const{error}=await sb.from('group_members').delete().eq('group_id',g.id).eq('user_id',rm.dataset.rmm);if(error)return toast(error.message);await loadGroups();return openGInfo()}
+ const pf=q('[data-pf]');if(pf)return openProfile(pf.dataset.pf);
+ if(q('#gsave2'))return saveGInfo();
+ if(q('#genc'))return $('enc').classList.remove('hidden');
+ if(q('#gleave')){
+  const{error}=await sb.from('group_members').delete().eq('group_id',g.id).eq('user_id',ME.id);
+  if(error)return toast(error.message);
+  $('ginfo').classList.remove('show');GCUR=null;$('chat').classList.add('hidden');$('empty').classList.remove('hidden');
+  await loadGroups();render();
+ }
+});
+$('ginfo').addEventListener('change',async e=>{
+ if(e.target.id!=='gp2')return;
+ const f=e.target.files[0];if(!f||!GCUR)return;
+ const photo=await small(f,256);
+ const{error}=await sb.from('groups').update({photo}).eq('id',GCUR.id);
+ if(error)return toast(error.message);
+ toast('Foto actualizada');await loadGroups();openGInfo();
+});
+
+/* ---- Información de contacto ---- */
+function openProfile(uid){
+ const p=PROF[uid];if(!p)return toast('Perfil no disponible');
+ const c=CS.find(x=>x.friend===uid);
+ const reg=p.created_at?new Date(p.created_at).toLocaleDateString('es',{day:'numeric',month:'long',year:'numeric'}):'Desconocida';
+ const dias=p.created_at?Math.floor((Date.now()-new Date(p.created_at).getTime())/864e5):null;
+ $('cinfo').innerHTML=`<div class="pwrap">
+  <header class="phead"><button class="ic" data-close2>←</button><b>Info del contacto</b><span></span></header>
+  <div class="hero">${av(p,pcol(uid))}<h2>${esc((c&&c.nickname)||p.name)}</h2><p>@${esc(p.username)}</p><div class="bds">${bdg(p)}</div></div>
+  <div class="card2 info">
+   <div class="ir"><span>📞</span><div><small>Número</small><b>${p.phone?esc(p.phone):'No compartido'}</b></div></div>
+   <div class="ir"><span>📅</span><div><small>Se registró el</small><b>${reg}</b>${dias!==null?`<em>hace ${dias} días</em>`:''}</div></div>
+   <div class="ir"><span>ℹ️</span><div><small>Info</small><b>${esc(p.about||'Sin info')}</b></div></div>
+   ${c&&c.nickname&&c.nickname!==p.name?`<div class="ir"><span>🏷️</span><div><small>Nombre real</small><b>${esc(p.name)}</b></div></div>`:''}
+  </div>
+  <div class="rowbtns">${c?`<button class="btn" data-pm="${uid}">💬 Mensaje</button><button class="btn alt" data-pc="${uid}">📞 Llamar</button>`:`<button class="btn" data-padd="${uid}">＋ Agregar a mis chats</button>`}</div>
+ </div>`;
+ $('cinfo').classList.add('show');
+}
+$('cinfo').addEventListener('click',async e=>{
+ const q=s=>e.target.closest(s);
+ if(q('[data-close2]'))return $('cinfo').classList.remove('show');
+ const pm=q('[data-pm]'),pc=q('[data-pc]'),pa=q('[data-padd]');
+ if(pm){$('cinfo').classList.remove('show');return openChat(pm.dataset.pm)}
+ if(pc){$('cinfo').classList.remove('show');return startCall(pc.dataset.pc,false)}
+ if(pa){
+  const p=PROF[pa.dataset.padd];
+  const{error}=await sb.from('contacts').upsert({owner:ME.id,friend:p.id,nickname:p.name,bg:'fuego'},{onConflict:'owner,friend',ignoreDuplicates:true});
+  if(error)return toast(error.message);
+  await loadContacts();render();openProfile(p.id);toast('Agregado a tus chats');
+ }
+});
+
+/* ---- Abrir la información tocando el nombre ---- */
+$('cName').onclick=()=>GCUR?openGInfo():(CUR&&openProfile(CUR.friend));
+$('cAv').onclick=$('cName').onclick;
+$('cset').onclick=()=>GCUR?openGInfo():_cset();
