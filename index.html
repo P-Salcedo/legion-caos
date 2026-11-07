@@ -10,6 +10,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="config.js"></script>
 </head><body>
+<canvas id="bgfx"></canvas>
 <section id="login">
  <form class="card" id="lf">
   <div class="orn">✦ ✧ ✦</div><div class="logo">LEGIÓN DEL CAOS</div><div class="orn">━━━━ ⚔ ━━━━</div>
@@ -34,7 +35,7 @@
   <button data-tab="cfg"><i>⚙️</i><span>Ajustes</span></button>
  </nav>
  <aside id="side">
-  <header class="top"><h2 id="stitle">Chats</h2><button class="ic" id="addb" title="Agregar">＋</button></header>
+  <header class="top"><h2 id="stitle">Chats</h2><button class="ic" id="gb" title="Crear grupo">👥</button><button class="ic" id="addb" title="Agregar">＋</button></header>
   <div class="srch"><input id="q" placeholder="Buscar" autocomplete="off"></div>
   <div id="list"></div>
  </aside>
@@ -52,6 +53,7 @@
 
 <div id="am" class="modal hidden"><div class="box"><h3>Agregar persona</h3><label class="lbl">Apodo con el que lo quieras agregar:</label><input id="an" maxlength="30" placeholder="Ej. Mi primo"><label class="lbl">Usuario/número del usuario que desea agregar:</label><input id="au" required placeholder="usuario o +52 55 1234 5678"><p class="err" id="aerr"></p><div class="btns"><button class="ghost" data-close>Cancelar</button><button class="btn" id="ago">Agregar</button></div></div></div>
 <div id="cm" class="modal hidden"><div class="box"><h3>Apodo y fondo</h3><input id="cnick" maxlength="30" placeholder="Apodo"><p class="copy">Fondo del chat</p><div class="bgs" id="bgs"></div><div class="btns"><button class="ghost" id="cdel">Quitar chat</button><button class="ghost" data-close>Cancelar</button><button class="btn" id="csave">Guardar</button></div></div></div>
+<div id="gm" class="modal hidden"><div class="box"><h3>Crear grupo</h3><input id="gmn" maxlength="30" placeholder="Nombre del grupo"><label class="lbl">Tipo de grupo</label><select id="gmc"><option value="solo">Solo (abierto: agregas miembros tú)</option><option value="creadores">Creadores</option><option value="moderadores">Moderadores</option><option value="patrocinador">Patrocinador</option><option value="creador_contenido">Creador de contenido</option><option value="veterano">Veterano</option></select><p class="copy">Los grupos de rango se llenan solos con quienes tengan esa insignia.</p><div class="btns"><button class="ghost" data-close>Cancelar</button><button class="btn" id="gcreate">Crear</button></div></div></div>
 <div id="pm" class="modal hidden"><div class="box"><h3>Publicar estado</h3><textarea id="stx" rows="3" maxlength="200" placeholder="¿Qué pasa en el caos?"></textarea><p class="copy">Se oculta automáticamente a las 24 horas.</p><div class="btns"><button class="ghost" data-close>Cancelar</button><button class="btn" id="sto">Publicar</button></div></div></div>
 <div id="ban" class="modal hidden"><div class="box" style="text-align:center"><div class="logo sm">ACCESO DENEGADO</div><p class="msg"></p><button class="btn">Cerrar sesión</button></div></div>
 <div id="mant" class="modal hidden"><div class="box" style="text-align:center"><div class="logo sm">MANTENIMIENTO</div><p class="msg"></p><button class="btn">Cerrar sesión</button></div></div>
