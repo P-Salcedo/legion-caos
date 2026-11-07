@@ -1,99 +1,127 @@
-# Legión Del Caos · Guía paso a paso (todo gratis)
+<p align="center">
+  <img src="icon-512.png" width="150" alt="Logo de Legión Del Caos">
+</p>
 
-Lo que usarás: **GitHub** (aloja la app) y **Supabase** (base de datos, cuentas y mensajes en tiempo real).
+<h1 align="center">⚔️ LEGIÓN DEL CAOS ⚔️</h1>
 
-## Paso 1 · Crear la base de datos en Supabase
-1. Entra a **supabase.com** → **Start your project** → inicia sesión con tu cuenta de GitHub.
-2. **New project** → nombre `legion-caos` → escribe una contraseña de base de datos y guárdala → elige la región más cercana → **Create new project**. Espera 1–2 minutos.
-3. Menú izquierdo: **Authentication** → **Sign In / Providers** → **Email** → desactiva **Confirm email** → **Save**. (Así la cuenta funciona al instante.)
-4. Menú izquierdo: **SQL Editor** → **+ New query** → abre el archivo `supabase.sql`, copia TODO, pégalo y pulsa **Run**. Debe decir *Success*. Si algún mensaje dice que ya existe algo, es normal.
+<p align="center"><b>La app de mensajería de la Legión: chats, grupos, llamadas y guerra de clanes, todo en rojo y negro.</b></p>
 
-## Paso 2 · Conectar la app con tu base de datos
-1. Menú: **Project Settings** (engranaje) → **API** (o **API Keys**).
-2. Copia **Project URL** (algo como `https://abcd1234.supabase.co`).
-3. Copia la clave **anon public**. Si ves pestañas, usa la de *anon* (legacy).
-4. Abre `config.js`, reemplaza `TU-PROYECTO` y `PEGA_AQUI_TU_CLAVE_ANON_PUBLIC` con esos datos y guarda.
+<p align="center">
+  <a href="https://p-salcedo.github.io/legion-caos/"><b>🌐 Abrir la app</b></a> ·
+  <a href="GUIA.md"><b>📘 Guía de instalación</b></a> ·
+  <a href="#-funciones"><b>✨ Funciones</b></a>
+</p>
 
-La clave *anon* es pública por diseño. La seguridad real está en las reglas del `supabase.sql`. **Nunca pongas la clave `service_role` en estos archivos.**
+---
 
-## Paso 3 · Subir todo a GitHub
-1. Entra a **github.com** → crea una cuenta gratis si no tienes.
-2. Botón **+** → **New repository** → nombre `legion-caos` → marca **Public** → **Create repository**.
-3. En la página del repositorio pulsa **uploading an existing file** (o *Add file → Upload files*).
-4. Arrastra estos archivos: `index.html`, `styles.css`, `app.js`, `config.js`, `supabase.sql`, `README.md` → **Commit changes**.
-5. Ve a **Settings** → **Pages** → en *Source* elige **Deploy from a branch** → *Branch*: **main** y carpeta **/ (root)** → **Save**.
-6. Espera 1–2 minutos y recarga. Tu link será `https://TU-USUARIO.github.io/legion-caos/`. Ese link es el que compartes.
+## 🔥 ¿Qué es Legión Del Caos?
 
-## Paso 4 · Registrar a los moderadores (hazlo tú primero)
-El primero que registra un nombre se lo queda, así que regístralos antes de compartir el link.
-- Abre el link y entra con cada moderador: **usuario exacto** (si tiene símbolos, cópialo y pégalo) y su contraseña.
-- Al registrarse reciben su insignia automáticamente. Kirito además tiene la de creador.
+Una app de mensajería pensada para clanes, escuadras y comunidades que quieren hablar, organizarse y pelear juntos. Funciona en el navegador, se instala en tu celular como una app y también existe como APK para Android.
 
-## Paso 5 · Probar que se comunican
-1. Abre el link en dos aparatos (celular y computadora, o una ventana de incógnito).
-2. Entra con dos usuarios distintos.
-3. En uno pulsa **＋** → escribe el usuario exacto del otro → **Agregar**.
-4. Envía un mensaje: aparece en tiempo real en el otro aparato, y el chat aparece solo en su lista.
-5. Pulsa ⚙️ dentro del chat para cambiar el **apodo** y el **fondo** (llamas de código, lluvia de código, sangre, abismo o negro).
+Entra con tu usuario, agrega a tu gente y ya estás dentro de la Legión.
 
-## Solución de problemas
-- **La pantalla no responde o dice `Failed to fetch`:** revisa `config.js`. La URL debe empezar con `https://` y no tener espacios.
-- **`Invalid API key`:** copia de nuevo la clave *anon*. Si tu proyecto solo muestra claves nuevas (*publishable*), en `index.html` cambia `@2.45.4` por `@2`.
-- **`Usuario o contraseña incorrectos`:** revisa mayúsculas, espacios y símbolos. Si el usuario no existe, la app intenta crearlo.
-- **`No existe ese usuario`:** esa persona debe haberse registrado con ese nombre exacto.
-- **Cambiaste el SQL:** pégalo otra vez en **SQL Editor** y pulsa **Run**. Es seguro repetirlo.
+## 🏆 ¿Por qué unirte?
 
-## Límites del plan gratis
-- **Supabase:** si nadie usa el proyecto durante una semana, se pausa. Entra al panel y pulsa **Restore**. Tiene 500 MB de base de datos y límites de conexiones y mensajes en tiempo real (puedes ver el uso en el panel).
-- **GitHub Pages:** gratis en repositorios públicos.
-- Las fotos se guardan en la base de datos, así que con mucho uso crece.
+- 💬 **Chats en tiempo real**: los mensajes llegan al instante, con ✓✓ y separadores por día.
+- 🎭 **Stickers animados**: 16 stickers con movimiento, y la opción de subir tus propias imágenes.
+- 🛡️ **Clan Legión Caos**: un grupo oficial donde están todos los miembros.
+- 📋 **Encuestas de equipos**: organiza escuadras de 4 personas, con tiempo límite para cambiar.
+- 📞 **Llamadas de voz y video**, con el tono de llamada que tú eliges.
+- 🎨 **Un diseño que se siente vivo**: fondo animado, brasas flotando, brillos y transiciones suaves.
+- 🆓 **Gratis**: corre sobre GitHub Pages y Supabase, sin costo.
+- 📱 **Instalable**: como app en tu celular, sin pasar por una tienda.
+- 🔐 **Cuentas protegidas**: contraseñas cifradas y reglas de acceso en la base de datos.
 
-## Qué incluye esta versión
-Acceso con contraseña segura (Supabase Auth), chats 1 a 1 en tiempo real, apodos editables, fondos de chat, estados que se ocultan a las 24 horas, insignias y panel de moderación, foto de perfil.
+## ✨ Funciones
 
-Todavía no incluye llamadas reales, comunidades y canales.
+### 💬 Chats privados
+- Busca a tus contactos por usuario o por número de teléfono.
+- Ponle un **apodo** a cada persona y cambia el **fondo** de cada chat: llamas de código, lluvia de código, sangre, abismo o negro.
+- Toca el nombre de la persona para ver su **información**: número, fecha de registro, info e insignias.
 
-## Actualización 2 (teléfono, baneos, mantenimiento)
-1. Supabase → **SQL Editor** → **New query** → pega `supabase-v2.sql` → **Run**.
-2. En GitHub sube `index.html`, `styles.css` y `app.js` (reemplazan los anteriores) → **Commit changes**.
-3. Abre tu link y recarga con **Ctrl+F5** (o Cmd+Shift+R en Mac) para cargar la versión nueva.
+### 👥 Grupos y Clan
+- Crea grupos **Solo** (abiertos, tú decides quién entra) o de **rango**: Creadores, Moderadores, Patrocinador, Creador de contenido o Veterano. Los de rango se llenan solos con quien tiene esa insignia.
+- **Clan Legión Caos**: todos los usuarios están dentro, los nuevos y los antiguos. Solo moderadores y creadores lo administran.
+- Los administradores deciden quién puede mandar mensajes, quién puede editar el nombre y quién puede cambiar la foto.
+- Toca el nombre del grupo para ver sus miembros y su configuración.
 
-## ¿Dónde se guarda todo?
-Todo vive en tu proyecto de **Supabase** (servidores en la nube). GitHub solo guarda los archivos de la página.
+### 📋 Encuestas de equipos
+- Los moderadores publican una encuesta con título, texto y equipos.
+- Cada equipo tiene 4 cupos. Te unes tocando el equipo que quieres.
+- Tienes **5 minutos** para cambiar de equipo. Después, tu elección queda fija.
+- Los moderadores pueden mover, agregar o quitar personas, y cerrar o reabrir la encuesta.
 
-- **Cuentas y contraseñas:** Supabase → **Authentication → Users**. La contraseña se guarda cifrada (hash); nadie puede leerla, ni tú. No está en el código.
-- **Perfiles** (nombre, foto, teléfono, insignias): **Table Editor → profiles**.
-- **Contactos, apodos y fondos de chat:** **Table Editor → contacts**.
-- **Mensajes:** **Table Editor → messages**.
-- **Estados** (se ocultan a las 24 h): **Table Editor → statuses**.
-- **Mantenimiento:** **Table Editor → app_config**.
+### 📞 Llamadas
+- Voz y video entre usuarios, con micrófono y silencio.
+- Cada persona elige su **tono de llamada**: Clásico, Campana, Caos o Trueno.
+- Funcionan mientras la app esté abierta.
 
-Privacidad: quien administra el proyecto (tú) puede ver los mensajes desde el panel. La app no tiene cifrado de extremo a extremo.
+### ⭕ Estados
+- Publica un estado de texto que se oculta automáticamente a las **24 horas**.
 
-## Verificar que todo está conectado
-1. Abre tu link de GitHub Pages.
-2. Pulsa **Diagnóstico de conexión** debajo del botón de entrar.
-3. Deben aparecer dos ✅: *config.js* y *Base de datos*. Si aparece una ❌, el mensaje te dice qué paso falta.
-4. Crea una cuenta de prueba. En Supabase, **Authentication → Users** debe mostrarla, y **Table Editor → profiles** debe tener su fila.
+### 🛡️ Insignias y moderación
 
-## Actualización 3 (diseño tipo WhatsApp y stickers)
-1. Supabase → **SQL Editor** → **New query** → pega `supabase-v3.sql` → **Run**.
-2. En GitHub sube `index.html` y `styles.css` (reemplazan los anteriores), y `ui.js` y `supabase-v3.sql` (nuevos). `app.js` y `config.js` no cambian.
-3. Recarga la página: en el celular, menú ⋮ → **Actualizar** (o Ctrl+F5 en computadora).
+| Insignia | Qué significa |
+|---|---|
+| 👑 **Creador** | Dirige la Legión: mantenimiento, rangos y moderación |
+| 🛡️ **Moderación** | Administra usuarios, grupos y encuestas |
+| 🎬 **Creador de contenido** | Reconocimiento a quienes crean contenido |
+| 💎 **Patrocinador** | Reconocimiento a quienes apoyan la Legión |
+| 💞 **Parejas** | Para quienes van en pareja |
+| 🎖️ **Veterano** | Para los miembros con más historia |
 
-**Stickers:** en cualquier chat toca 😊. Hay 16 stickers animados (rebote, giro, pulso). Con **📁 Subir sticker** puedes enviar una imagen propia; si es PNG con fondo transparente, se ve mejor.
+- El panel 🛡️ **Moderar** muestra a todos los usuarios en una lista. Tocas a uno y le asignas o le quitas insignias.
+- Los moderadores pueden sancionar a un usuario. El creador puede activar el **modo mantenimiento** con un mensaje personalizado para todos los demás.
 
-## Actualización 4 (moderación en lista, llamadas, tonos, apodos, creador, app instalable)
-1. Supabase → **SQL Editor** → **New query** → pega `supabase-v4.sql` → **Run**.
-2. GitHub: sube `index.html`, `styles.css`, `app.js` y `ui.js` (reemplazan los anteriores). Sube `calls.js`, `sw.js`, `manifest.webmanifest`, `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` y `supabase-v4.sql` (nuevos). `config.js` no cambia.
-3. Recarga la página (⋮ → Actualizar en el celular).
+### 🎨 Diseño
+- Tema rojo y negro, con un fondo que se mueve despacio y brasas que flotan.
+- Paneles de cristal, brillos en el Clan y transiciones suaves entre pantallas.
 
-**Llamadas:** abre un chat y toca 📞 (voz) o 📹 (video). La otra persona debe tener la app abierta. Sale su tono de llamada, que cada quien elige en ⚙️ Ajustes.
-Si una llamada no conecta con datos móviles, falta un servidor TURN. Puedes crear uno gratis y pegarlo en `config.js` como `TURN:{urls:'turn:...',username:'...',credential:'...'}`.
+### 🔐 Seguridad y privacidad
+- Las contraseñas se guardan **cifradas** en Supabase Auth. Nadie, ni el administrador, puede leerlas.
+- Cada usuario solo ve lo que le corresponde: las reglas de la base de datos lo garantizan.
+- Transparencia: el administrador del proyecto puede ver los mensajes desde el panel de Supabase. La app **no** tiene cifrado de extremo a extremo.
 
-**Creador:** en 🛡️ Moderar, toca un usuario y activa o quita el chip 👑 Creador. No puedes quitártelo a ti mismo.
+## 🧩 ¿Qué contiene el proyecto?
 
-**Instalar como app:**
-- Android (Chrome): ⋮ → **Instalar aplicación** (o *Agregar a pantalla principal*).
-- iPhone (Safari): botón Compartir → **Agregar a pantalla de inicio**.
-La app necesita abrirse con el link https de GitHub Pages.
+| Archivo | Para qué sirve |
+|---|---|
+| `index.html`, `styles.css` | Pantallas y diseño |
+| `app.js`, `ui.js`, `calls.js` | Lógica: cuentas, chats, grupos, encuestas y llamadas |
+| `config.js` | Datos de conexión con tu base de datos |
+| `sw.js`, `manifest.webmanifest` | Instalación como app y uso básico sin conexión |
+| `icon-*.png`, `apple-touch-icon.png` | Íconos de la app |
+| `supabase*.sql` | Base de datos, reglas de seguridad y funciones (se ejecutan en orden) |
+| `.github/workflows/main.yml` | Genera el APK de Android |
+| `GUIA.md` | Paso a paso para instalar y configurar todo gratis |
+
+## 🚀 Empieza ahora
+
+1. **Abre la app** en tu navegador: [p-salcedo.github.io/legion-caos](https://p-salcedo.github.io/legion-caos/)
+2. **Instálala** en tu celular:
+   - Android (Chrome): menú ⋮ → *Instalar aplicación*.
+   - iPhone (Safari): botón Compartir → *Agregar a pantalla de inicio*.
+3. **Descarga el APK** de Android desde la pestaña *Actions* del repositorio, ejecutando el flujo *Generar APK*.
+4. **Crea tu cuenta** con un usuario único y una contraseña de al menos 6 caracteres.
+
+## 🛣️ Próximamente
+- 🔔 Notificaciones push, para no perderte una llamada o un mensaje.
+- 💬 Chat propio para cada escuadra.
+- 🌍 Llamadas que funcionen con datos móviles (servidor TURN).
+- 📸 Fotos completas en el chat.
+- 🏪 APK firmado para subirlo a Google Play.
+
+## 🤝 Únete a la Legión
+¿Tienes una idea o encontraste un error? Abre un *Issue* en este repositorio.
+Comparte el link con tu clan y pon tu usuario en el Clan Legión Caos.
+
+## 🧱 Tecnologías
+HTML, CSS y JavaScript · Supabase (autenticación, base de datos y tiempo real) · WebRTC para las llamadas · Service Worker (PWA) · Capacitor y GitHub Actions para el APK · GitHub Pages para publicar.
+
+## 📄 Licencia
+© 2026 Legión Del Caos. Todos los derechos reservados.
+El código es público para que lo veas y aprendas de él, pero no puede copiarse ni redistribuirse como si fuera tuyo sin permiso.
+
+---
+
+<p align="center"><b>⚔️ Hasta la victoria, Legión ⚔️</b></p>
