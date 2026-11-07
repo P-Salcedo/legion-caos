@@ -134,3 +134,22 @@ input[type=file]{font-size:13px;color:var(--mut)}
 .chip:disabled{opacity:.25;cursor:not-allowed}
 .mrow:active{background:#ffffff12}
 .chev{color:var(--mut);font-size:24px;margin-left:auto}
+
+#bgfx{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+body::before{opacity:.5}
+body::after{content:"";position:fixed;inset:-20%;pointer-events:none;z-index:0;background:radial-gradient(40% 30% at 20% 30%,#ff1f3d26,transparent 70%),radial-gradient(35% 28% at 80% 70%,#ffb30f1c,transparent 70%),radial-gradient(30% 25% at 60% 20%,#7a001c40,transparent 70%);animation:aurora 22s ease-in-out infinite alternate}
+@keyframes aurora{0%{transform:translate3d(-3%,-2%,0) scale(1)}100%{transform:translate3d(3%,2%,0) scale(1.06)}}
+#side{background:rgba(18,8,9,.8);backdrop-filter:blur(10px)}
+#nav{background:rgba(26,10,15,.85);backdrop-filter:blur(10px)}
+#pane{background:rgba(6,2,3,.7);backdrop-filter:blur(3px)}
+.row{position:relative;transition:background .25s,transform .2s}
+.row:active{transform:scale(.99)}
+.clan{background:linear-gradient(90deg,#ff1f3d1a,#ffcf5a14);overflow:hidden}
+.clan::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,#ffcf5a33 50%,transparent 70%);transform:translateX(-100%);animation:sheen 4.5s ease-in-out infinite;pointer-events:none}
+@keyframes sheen{0%,100%{transform:translateX(-100%)}50%{transform:translateX(100%)}}
+.tagclan{font-size:10px;font-weight:800;letter-spacing:1px;padding:2px 6px;border-radius:8px;background:linear-gradient(90deg,#ff1f3d,#ffcf5a);color:#000}
+.gav{width:50px;height:50px;background-size:cover;background-position:center}
+.clan .gav{box-shadow:0 0 0 2px #ffcf5a,0 0 18px #ff1f3d88;animation:glow 3s ease-in-out infinite}
+@keyframes glow{50%{box-shadow:0 0 0 2px #ffcf5a,0 0 26px #ffcf5acc}}
+.gn{display:block;font-size:12px;font-weight:700;margin-bottom:2px}
+.btn,.ghost{transition:all .2s}
